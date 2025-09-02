@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 
 const MY_EMAIL_PASSWORD = process.env.EMAIL_PASS;
-const RECIPIENT_EMAIL = 'your-fixed-email@yourdomain.com';
+const RECIPIENT_EMAIL = 'muhammadwaqarsikandar@gmail.com';
 
 const app = express();
 app.use(express.json());
