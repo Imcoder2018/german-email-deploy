@@ -19,19 +19,15 @@ async function sendContactEmail(formData) {
       },
     });
 
-    // Construct the email with the new variables
     const mailOptions = {
       from: '"Your Web Service" <ai@gg-projektbau.de>',
       to: RECIPIENT_EMAIL,
-      subject: `New Submission from ${formData.firstName} ${formData.lastName}`,
+      subject: `New Submission from ${formData.first_name}`,
       html: `<h3>New Contact Form Submission</h3>
         <ul>
-          <li><strong>First Name:</strong> ${formData.firstName}</li>
-          <li><strong>Last Name:</strong> ${formData.lastName}</li>
+          <li><strong>Name:</strong> ${formData.first_name}</li>
           <li><strong>Email:</strong> ${formData.email}</li>
-          <li><strong>Phone Number:</strong> ${formData.phone}</li>
-          <li><strong>Company:</strong> ${formData.companyName}</li>
-          <li><strong>Industry:</strong> ${formData.industry}</li>
+          <li><strong>Phone:</strong> ${formData.custom1}</li>
           <li><strong>Address:</strong> ${formData.address}</li>
         </ul>`,
     };
@@ -45,16 +41,17 @@ async function sendContactEmail(formData) {
 }
 
 app.post('/webhook', async (req, res) => {
-  // Extract the new variables from the request body
-  const { firstName, lastName, email, phone, companyName, industry, address } = req.body;
+  // Use the exact built-in variable names from the request body
+  const { first_name, email, custom1, address } = req.body;
 
-  // Updated validation check
-  if (!firstName || !lastName || !email || !phone || !companyName || !industry || !address) {
+  // Updated validation to use the exact variable names
+  if (!first_name || !email || !custom1 || !address) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
   try {
-    await sendContactEmail({ firstName, lastName, email, phone, companyName, industry, address });
+    // Pass the object with the exact names to the function
+    await sendContactEmail({ first_name, email, custom1, address });
     res.status(200).json({ message: 'Email sent successfully!' });
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error.' });
