@@ -26,7 +26,8 @@ async function sendContactEmail(formData) {
       },
     });
 
-    // --- Dynamically build the email body (UPDATED SECTION) ---
+    // This part of the code remains the same. It will dynamically build the
+    // email body from the new, smaller "filteredData" object.
     let emailBodyHtml = '<h3>New Webhook Submission</h3>';
     
     if (Object.keys(formData).length === 0) {
@@ -34,23 +35,17 @@ async function sendContactEmail(formData) {
     } else {
       emailBodyHtml += '<ul>';
       for (const [key, value] of Object.entries(formData)) {
-        // Check if the value is an object. If so, format it as a JSON string.
         if (typeof value === 'object' && value !== null) {
-          // JSON.stringify converts the object to text. The '<pre>' tag preserves formatting.
           emailBodyHtml += `<li><strong>${key}:</strong> <pre>${JSON.stringify(value, null, 2)}</pre></li>`;
         } else {
-          // If it's not an object, display it normally.
           emailBodyHtml += `<li><strong>${key}:</strong> ${value || 'Not provided'}</li>`;
         }
       }
       emailBodyHtml += '</ul>';
     }
     
-    // --- Create a dynamic subject line ---
-    const subjectName = formData.first_name || formData.name || 'Anonymous';
-    const subject = `New Submission from ${subjectName}`;
+    const subject = `New Call Submission: ${formData.call_id || ''}`;
 
-    // --- Construct the email options ---
     const mailOptions = {
       from: '"Your Web Service" <ai@gg-projektbau.de>',
       to: RECIPIENT_EMAIL,
@@ -69,13 +64,28 @@ async function sendContactEmail(formData) {
 }
 
 
-// --- Define the Webhook Endpoint ---
+// --- Define the Webhook Endpoint (UPDATED SECTION) ---
 app.post('/webhook', async (req, res) => {
   console.log('Webhook received a request...');
-  const formData = req.body;
+  
+  // --- The new filtering logic starts here ---
+  const incomingData = req.body;
+  const filteredData = {};
+
+  // Define a "whitelist" of the keys you want to keep in the final email.
+  const desiredKeys = ['call_id', 'from_number', 'to_number', 'args', 'transcript'];
+
+  // Loop through the desired keys and copy them from the incoming data to our new object.
+  for (const key of desiredKeys) {
+    if (incomingData[key] !== undefined) {
+      filteredData[key] = incomingData[key];
+    }
+  }
+  // --- The filtering logic ends here ---
 
   try {
-    await sendContactEmail(formData);
+    // Pass the new, smaller "filteredData" object to the email function.
+    await sendContactEmail(filteredData);
     res.status(200).json({ message: 'Email sent successfully!' });
   } catch (error) {
     console.error('Failed to process webhook:', error);
