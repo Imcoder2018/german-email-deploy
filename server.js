@@ -2,19 +2,17 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 
-// --- IMPORTANT: Load environment variables for security ---
-// For local testing, you might need a package like `dotenv` (`npm install dotenv`)
-// For deployment, you will set these in your hosting service's dashboard.
+// --- Load environment variables ---
 const MY_EMAIL_PASSWORD = process.env.EMAIL_PASS;
-const RECIPIENT_EMAIL = 'muhammadwaqarsikandar@gmail.com'; // The email address that will receive the form data
+const RECIPIENT_EMAIL = 'muhammadwaqarsikandar@gmail.com'; // Your recipient email
 
 // --- Create the Express App ---
 const app = express();
 app.use(express.json()); // Middleware to parse incoming JSON data
 
 /**
- * This is your existing email function, slightly modified.
- * It's now more generic and gets all its data passed in.
+ * Sends an email with dynamically generated content based on the formData.
+ * @param {object} formData - An object containing any key-value pairs from the request.
  */
 async function sendContactEmail(formData) {
   try {
@@ -24,28 +22,36 @@ async function sendContactEmail(formData) {
       secure: false,
       auth: {
         user: 'ai@gg-projektbau.de',
-        pass: MY_EMAIL_PASSWORD, // Use the environment variable
+        pass: MY_EMAIL_PASSWORD,
       },
     });
 
-    // Construct the email content from the form data
+    // --- Dynamically build the email body ---
+    let emailBodyHtml = '<h3>New Webhook Submission</h3>';
+    
+    // Check if any data was sent
+    if (Object.keys(formData).length === 0) {
+      emailBodyHtml += '<p>This submission did not contain any data.</p>';
+    } else {
+      emailBodyHtml += '<ul>';
+      // Loop through all key-value pairs in the received data and add them to a list
+      for (const [key, value] of Object.entries(formData)) {
+        emailBodyHtml += `<li><strong>${key}:</strong> ${value || 'Not provided'}</li>`;
+      }
+      emailBodyHtml += '</ul>';
+    }
+
+    // --- Create a dynamic subject line ---
+    // It will use a name if available, otherwise it uses a generic title.
+    const subjectName = formData.first_name || formData.name || 'Anonymous';
+    const subject = `New Submission from ${subjectName}`;
+
+    // --- Construct the email options ---
     const mailOptions = {
       from: '"Your Web Service" <ai@gg-projektbau.de>',
-      to: RECIPIENT_EMAIL, // Send to your fixed email address
-      subject: `New Contact Form Submission from ${formData.first_first_name}`,
-      text: `You have a new submission:
-        
-        first_name: ${formData.first_first_name}
-        Email: ${formData.email}
-        custom1: ${formData.custom1}
-        Address: ${formData.address}`,
-      html: `<h3>New Contact Form Submission</h3>
-        <ul>
-          <li><strong>first_name:</strong> ${formData.first_first_name}</li>
-          <li><strong>Email:</strong> ${formData.email}</li>
-          <li><strong>custom1:</strong> ${formData.custom1}</li>
-          <li><strong>Address:</strong> ${formData.address}</li>
-        </ul>`,
+      to: RECIPIENT_EMAIL,
+      subject: subject,
+      html: emailBodyHtml,
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -63,17 +69,14 @@ async function sendContactEmail(formData) {
 app.post('/webhook', async (req, res) => {
   console.log('Webhook received a request...');
   
-  // 1. Extract data from the request body
-  const { first_name, email, custom1, address } = req.body;
+  // 1. Get ALL data from the request body, no matter what it is
+  const formData = req.body;
 
-  // 2. Basic Validation: Check if required fields are present
-  if (!first_name || !email || !custom1 || !address) {
-    return res.status(400).json({ message: 'Missing required fields: first_name, email, custom1, address' });
-  }
+  // 2. The validation check for required fields has been REMOVED.
 
   try {
-    // 3. Call the email function with the extracted data
-    await sendContactEmail({ first_name, email, custom1, address });
+    // 3. Call the email function with whatever data was received
+    await sendContactEmail(formData);
     // 4. Send a success response
     res.status(200).json({ message: 'Email sent successfully!' });
   } catch (error) {
