@@ -32,18 +32,18 @@ async function sendContactEmail(formData) {
     const mailOptions = {
       from: '"Your Web Service" <ai@gg-projektbau.de>',
       to: RECIPIENT_EMAIL, // Send to your fixed email address
-      subject: `New Contact Form Submission from ${formData.name}`,
+      subject: `New Contact Form Submission from ${formData.first_first_name}`,
       text: `You have a new submission:
         
-        Name: ${formData.name}
+        first_name: ${formData.first_first_name}
         Email: ${formData.email}
-        Phone: ${formData.phone}
+        custom1: ${formData.custom1}
         Address: ${formData.address}`,
       html: `<h3>New Contact Form Submission</h3>
         <ul>
-          <li><strong>Name:</strong> ${formData.name}</li>
+          <li><strong>first_name:</strong> ${formData.first_first_name}</li>
           <li><strong>Email:</strong> ${formData.email}</li>
-          <li><strong>Phone:</strong> ${formData.phone}</li>
+          <li><strong>custom1:</strong> ${formData.custom1}</li>
           <li><strong>Address:</strong> ${formData.address}</li>
         </ul>`,
     };
@@ -64,16 +64,16 @@ app.post('/webhook', async (req, res) => {
   console.log('Webhook received a request...');
   
   // 1. Extract data from the request body
-  const { name, email, phone, address } = req.body;
+  const { first_name, email, custom1, address } = req.body;
 
   // 2. Basic Validation: Check if required fields are present
-  if (!name || !email || !phone || !address) {
-    return res.status(400).json({ message: 'Missing required fields: name, email, phone, address' });
+  if (!first_name || !email || !custom1 || !address) {
+    return res.status(400).json({ message: 'Missing required fields: first_name, email, custom1, address' });
   }
 
   try {
     // 3. Call the email function with the extracted data
-    await sendContactEmail({ name, email, phone, address });
+    await sendContactEmail({ first_name, email, custom1, address });
     // 4. Send a success response
     res.status(200).json({ message: 'Email sent successfully!' });
   } catch (error) {
