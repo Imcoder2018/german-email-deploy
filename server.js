@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 
 // --- Load environment variables ---
 const MY_EMAIL_PASSWORD = process.env.EMAIL_PASS;
-const RECIPIENT_EMAIL = 'muhammadwaqarsikandar@gmail.com'; // Your recipient email
+const RECIPIENT_EMAIL = 'ai@fenster-projektbau.de'; // Your recipient email
 
 // --- Create the Express App ---
 const app = express();
